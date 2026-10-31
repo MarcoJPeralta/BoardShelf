@@ -20,5 +20,17 @@
         </li>
       }
     </ul>
+    @if (!gamesLoaded()) {
+      <p class="library-content__message" role="status">Opening the vault…</p>
+    } @else if (gamesError()) {
+      <p class="library-content__message" role="alert">{{ gamesError() }}</p>
+    } @else if (total() === 0) {
+      <div class="library-content__empty">
+        <p class="library-content__message">Your vault is empty.</p>
+        <a class="btn-main" routerLink="/add-game">Add your first game</a>
+      </div>
+    } @else if (!hasFilteredGames()) {
+      <p class="library-content__message" role="status">No games match these filters.</p>
+    }
   </div>
 </div>

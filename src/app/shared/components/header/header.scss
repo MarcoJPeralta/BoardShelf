@@ -4,9 +4,14 @@
   backdrop-filter: blur(12px);
   box-shadow: 0 1px 0 rgba(var(--shadow-color), 0.5);
   padding: 1rem 1.5rem;
-  display: flex;
   align-items: center;
   gap: 2rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  
+  @media screen and (min-width: 760px) {
+    display: flex;
+  }
 }
 
 .header-actions {
@@ -17,7 +22,7 @@
 
 h1 {
   font-family: var(--font-secondary);
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 900;
   text-transform: uppercase;
   line-height: 1.33;
@@ -25,6 +30,16 @@ h1 {
   color: var(--title-color);
   margin-bottom: -9px;
   display: inline-block;
+  
+  @media screen and (min-width: 760px) {
+    font-size: 1.5rem;
+  }
+}
+
+nav {
+  grid-row: 2;
+  justify-items: center;
+  grid-column: 1 / -1;
 }
 
 .nav-list {

@@ -1,7 +1,7 @@
 <div class="auth-container">
   <header>
     <h2>{{ view() === 'login' ? 'Welcome back' : 'Create Account' }}</h2>
-    <button class="close-btn" (click)="dialogRef.close()">×</button>
+    <button class="close-btn" type="button" aria-label="Close" (click)="dialogRef.close()">×</button>
   </header>
 
   <button class="google-btn btn-base" (click)="loginWithGoogle()">
@@ -10,29 +10,38 @@
 
   <div class="divider"><span>OR</span></div>
 
-  @if (view() !== 'magic') {
-    <form (submit)="handleEmailAuth(); $event.preventDefault()">
-      <input type="email" [(ngModel)]="email" name="email" placeholder="Email" required />
-      <input
-        type="password"
-        [(ngModel)]="password"
-        name="password"
-        placeholder="Password"
-        required
-      />
+  <form (submit)="handleEmailAuth(); $event.preventDefault()">
+    <input
+      type="email"
+      [(ngModel)]="email"
+      name="email"
+      placeholder="Email"
+      aria-label="Email"
+      required
+    />
+    <input
+      type="password"
+      [(ngModel)]="password"
+      name="password"
+      placeholder="Password"
+      aria-label="Password"
+      required
+    />
 
-      <button type="submit" class="btn-main">
-        {{ view() === 'login' ? 'Login' : 'Signup' }}
-      </button>
-    </form>
+    <button type="submit" class="btn-main">
+      {{ view() === 'login' ? 'Login' : 'Signup' }}
+    </button>
+  </form>
+
+  @if (errorMessage()) {
+    <p class="auth-error" role="alert">{{ errorMessage() }}</p>
   }
 
   <footer>
     @if (view() === 'login') {
-      <button class="btn-link" (click)="view.set('signup')">Don't have an account? Signup</button>
-      <button class="btn-link" (click)="view.set('magic')">Login with Email</button>
+      <button class="btn-link" (click)="switchView('signup')">Don't have an account? Signup</button>
     } @else {
-      <button class="btn-link" (click)="view.set('login')">Already have an account? Login</button>
+      <button class="btn-link" (click)="switchView('login')">Already have an account? Login</button>
     }
   </footer>
 </div>

@@ -5,6 +5,12 @@
   font-family: inherit;
 }
 
+.auth-error {
+  color: #ffb4ab;
+  font-size: 0.85rem;
+  margin-block: 0.75rem;
+}
+
 .auth-container {
   background-color: var(--background-color-secondary);
   color: var(--text-color);

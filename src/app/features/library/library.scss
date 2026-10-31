@@ -11,6 +11,16 @@
     gap: 1rem;
   }
 
+  &__message {
+    color: var(--text-color);
+  }
+
+  &__empty {
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+  }
+
   &__total {
     font-size: 0.85rem;
     font-weight: 600;

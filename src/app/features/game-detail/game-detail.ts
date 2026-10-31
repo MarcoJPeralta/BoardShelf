@@ -1,12 +1,12 @@
 import { Component, input, computed, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Sidebar } from '../../shared/components/sidebar/sidebar';
 import { Game } from '../../core/models/game.model';
 import { GameService } from '../../core/services/game.service';
 
 @Component({
   selector: 'app-game-detail',
-  imports: [Sidebar],
+  imports: [RouterLink, Sidebar],
   templateUrl: './game-detail.html',
   styleUrl: './game-detail.scss',
 })
@@ -16,6 +16,8 @@ export class GameDetail {
 
   id = input.required<string>();
 
+  gamesLoaded = this.gameService.gamesLoaded;
+  gamesError = this.gameService.gamesError;
   game = computed(() => this.gameService.getGameById(this.id()));
 
   bggUrl = computed(() => {

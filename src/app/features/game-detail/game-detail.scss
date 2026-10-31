@@ -160,12 +160,22 @@
 
 .game-detail--empty {
   align-content: center;
+  color: var(--text-color);
+  justify-items: start;
 }
 
 @media (max-width: 56rem) {
   .game-detail__content,
   .game-detail__hero {
     grid-template-columns: 1fr;
+  }
+
+  .game-detail__hero-content {
+    margin-bottom: 1rem;
+  }
+
+  .game-detail__hero p {
+    max-width: none;
   }
 
   .game-detail__actions {

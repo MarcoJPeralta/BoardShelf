@@ -1,80 +1,83 @@
 <section class="add-game">
-  <div class="add-game__form add-game__form-search">
-    <input
-      class="add-game__input"
-      type="text"
-      [formControl]="searchControl"
-      placeholder="Search for a game on BGG..."
-    />
+  @if (!isEditing()) {
+    <div class="add-game__form add-game__form-search">
+      <input
+        class="add-game__input"
+        type="text"
+        [formControl]="searchControl"
+        placeholder="Search for a game on BGG..."
+        aria-label="Search for a game on BGG"
+      />
 
-    @if (isSearching()) {
-      <p>Searching...</p>
-    }
+      @if (isSearching()) {
+        <p>Searching...</p>
+      }
 
-    @if (searchError()) {
-      <p class="add-game__upload-error">{{ searchError() }}</p>
-    }
+      @if (searchError()) {
+        <p class="add-game__upload-error">{{ searchError() }}</p>
+      }
 
-    @if (isLoadingThing()) {
-      <p>Loading game details from BGG…</p>
-    }
+      @if (isLoadingThing()) {
+        <p>Loading game details from BGG…</p>
+      }
 
-    @if (thingLoadError()) {
-      <p class="add-game__upload-error">{{ thingLoadError() }}</p>
-    }
+      @if (thingLoadError()) {
+        <p class="add-game__upload-error">{{ thingLoadError() }}</p>
+      }
 
-    @if (
-      !isSearching() &&
-      !searchError() &&
-      (searchControl.value ?? '').trim().length > 0 &&
-      searchResults().length === 0
-    ) {
-      <p>No results found.</p>
-    }
+      @if (
+        !isSearching() &&
+        !searchError() &&
+        (searchControl.value ?? '').trim().length > 0 &&
+        searchResults().length === 0
+      ) {
+        <p>No results found.</p>
+      }
 
-    @if (searchResults().length > 0) {
-      <ul class="add-game__search-results">
-        @for (result of paginatedSearchResults(); track result.bggId) {
-          <li tabindex="0" (keydown.enter)="selectGame(result)" (click)="selectGame(result)">
-            <span>{{ result.name }}</span>
-            @if (result.yearPublished) {
-              <span>({{ result.yearPublished }})</span>
-            }
-          </li>
-        }
-      </ul>
+      @if (searchResults().length > 0) {
+        <ul class="add-game__search-results">
+          @for (result of paginatedSearchResults(); track result.bggId) {
+            <li tabindex="0" (keydown.enter)="selectGame(result)" (click)="selectGame(result)">
+              <span>{{ result.name }}</span>
+              @if (result.yearPublished) {
+                <span>({{ result.yearPublished }})</span>
+              }
+            </li>
+          }
+        </ul>
 
-      <nav class="add-game__pagination" aria-label="Search results pagination">
-        <button
-          type="button"
-          (click)="changeSearchPage(searchPage() - 1)"
-          [disabled]="searchPage() === 1"
-        >
-          Previous
-        </button>
-        <p>
-          Showing {{ searchResultStart() }}-{{ searchResultEnd() }} of {{ searchResults().length }}
-        </p>
-        <button
-          type="button"
-          (click)="changeSearchPage(searchPage() + 1)"
-          [disabled]="searchPage() === searchTotalPages()"
-        >
-          Next
-        </button>
-      </nav>
-    }
-  </div>
+        <nav class="add-game__pagination" aria-label="Search results pagination">
+          <button
+            type="button"
+            (click)="changeSearchPage(searchPage() - 1)"
+            [disabled]="searchPage() === 1"
+          >
+            Previous
+          </button>
+          <p>
+            Showing {{ searchResultStart() }}-{{ searchResultEnd() }} of {{ searchResults().length }}
+          </p>
+          <button
+            type="button"
+            (click)="changeSearchPage(searchPage() + 1)"
+            [disabled]="searchPage() === searchTotalPages()"
+          >
+            Next
+          </button>
+        </nav>
+      }
+    </div>
 
-  <div class="add-game__or-separator">
-    <hr />
-    OR
-    <hr />
-  </div>
+    <div class="add-game__or-separator">
+      <hr />
+      OR
+      <hr />
+    </div>
+  }
 
   <form class="add-game__form" [formGroup]="gameForm" (ngSubmit)="handleSubmit()">
     <header class="add-game__header">
-      <h1 class="add-game__title">Manual Inscription</h1>
+      <h1 class="add-game__title">{{ isEditing() ? 'Edit Inscription' : 'Manual Inscription' }}</h1>
     </header>
 
     <div class="add-game__field">
@@ -209,9 +212,25 @@
       </div>
     </fieldset>
 
-    <button class="add-game__submit btn-main" type="submit" [disabled]="!gameForm.valid">
-      Catalog Game
+    <div class="add-game__field">
+      <label class="add-game__label" for="notes">Curator's notes</label>
+      <textarea
+        id="notes"
+        class="add-game__input add-game__textarea"
+        formControlName="notes"
+        name="notes"
+        rows="4"
+        placeholder="House rules, favourite player counts, who always wins..."
+      ></textarea>
+    </div>
+
+    <button class="add-game__submit btn-main" type="submit" [disabled]="!gameForm.valid || isSaving() || submitted()">
+      {{ isEditing() ? 'Save Changes' : 'Catalog Game' }}
     </button>
+
+    @if (saveError()) {
+      <p class="add-game__feedback add-game__feedback--error" role="alert">{{ saveError() }}</p>
+    }
 
     @if (gameForm.invalid && (gameForm.touched || gameForm.dirty)) {
       <p class="add-game__feedback add-game__feedback--error">

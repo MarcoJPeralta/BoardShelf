@@ -1,0 +1,110 @@
+.account {
+  align-content: start;
+  display: grid;
+  gap: 1.5rem;
+  padding: clamp(1rem, 4vw, 2rem);
+
+  h1 {
+    color: var(--primary-color);
+    font-family: var(--font-secondary);
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1.05;
+  }
+
+  &__panel {
+    background: color-mix(in srgb, var(--background-color-secondary) 88%, transparent);
+    border: 1px solid color-mix(in srgb, var(--text-color-secondary) 35%, transparent);
+    border-radius: 1rem;
+    display: grid;
+    gap: 1.5rem;
+    justify-items: start;
+    max-width: 36rem;
+    padding: 1.5rem;
+  }
+
+  &__panel--danger {
+    border-color: #ffb4ab;
+    color: var(--text-color);
+
+    h2 {
+      color: #ffb4ab;
+      font-family: var(--font-secondary);
+      font-size: 1.25rem;
+    }
+  }
+
+  &__delete {
+    background: transparent;
+    border: 1px solid #ffb4ab;
+    border-radius: 6px;
+    color: #ffb4ab;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.5rem 1.5rem;
+
+    &:hover:not([disabled]) {
+      background: #ffb4ab;
+      color: var(--background-color);
+    }
+
+    &[disabled] {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
+
+  &__delete-form {
+    display: grid;
+    gap: 0.75rem;
+    width: 100%;
+
+    label {
+      color: var(--text-color-tertiary);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    input {
+      background-color: var(--background-color);
+      border: 1px solid color-mix(in srgb, var(--text-color-secondary) 70%, transparent);
+      border-radius: 0.65rem;
+      color: var(--text-color);
+      font: inherit;
+      min-height: 2.75rem;
+      padding: 0.65rem 0.75rem;
+      width: 100%;
+    }
+  }
+
+  &__delete-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  &__error {
+    color: #ffb4ab;
+    font-size: 0.85rem;
+  }
+
+  &__details {
+    display: grid;
+    gap: 1rem;
+
+    dt {
+      color: var(--text-color-tertiary);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    dd {
+      color: var(--text-color);
+      overflow-wrap: anywhere;
+    }
+  }
+}

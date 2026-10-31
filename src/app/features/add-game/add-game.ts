@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, OnInit, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormControl, Validators } from '@angular/forms';
 import { GameService } from '../../core/services/game.service';
 import { Game } from '../../core/models/game.model';
@@ -22,6 +22,41 @@ export class AddGame implements OnInit {
   private fb = inject(FormBuilder);
   private cloudinaryService = inject(Cloudinary);
   private bggService = inject(BggService);
+
+  // Route param on `game/:id/edit`; undefined when adding a new game
+  id = input<string>();
+  isEditing = computed(() => !!this.id());
+  private editedGame = computed(() => {
+    const id = this.id();
+    return id ? this.gameService.getGameById(id) : undefined;
+  });
+  private isFormHydrated = false;
+
+  saveError = signal<string | null>(null);
+  isSaving = signal(false);
+
+  constructor() {
+    effect(() => {
+      const id = this.id();
+      if (!id || !this.gameService.gamesLoaded() || this.isFormHydrated) return;
+
+      const game = this.editedGame();
+      if (!game) {
+        this.router.navigate(['/game', id]); // The detail page explains the game is gone
+        return;
+      }
+
+      // Only once, so a live Firestore update can't overwrite what the user is typing
+      this.isFormHydrated = true;
+      this.gameForm.patchValue({
+        ...game,
+        imageUrl: game.imageUrl ?? '',
+        categories: game.categories.join(', '),
+        notes: game.notes ?? '',
+        bggId: game.bggId ?? '',
+      });
+    });
+  }
 
   searchResults = signal<BggSearchResult[]>([]);
   searchPage = signal(1);
@@ -150,7 +185,10 @@ export class AddGame implements OnInit {
       const raw = this.gameForm.getRawValue();
       const bggDetails = this.selectedBggDetails();
       const categories = raw.categories
-        ? raw.categories.split(',').map((c: string) => c.trim())
+        ? raw.categories
+            .split(',')
+            .map((c: string) => c.trim())
+            .filter(Boolean)
         : [];
       const payload: Omit<Game, 'id' | 'addedAt'> = {
         name: raw.name!,
@@ -169,11 +207,59 @@ export class AddGame implements OnInit {
         notes: raw.notes || undefined,
         bggId: raw.bggId || undefined,
       };
-      this.gameService.addGame(payload);
+
+      const game = this.editedGame();
+      if (game) {
+        this.saveChanges(game, payload);
+        return;
+      }
+
+      this.saveNewGame(payload);
+    }
+  }
+
+  private async saveNewGame(payload: Omit<Game, 'id' | 'addedAt'>): Promise<void> {
+    this.saveError.set(null);
+    this.isSaving.set(true);
+
+    try {
+      await this.gameService.addGame(payload);
       this.submitted.set(true);
       setTimeout(() => {
         this.router.navigate(['/library']);
       }, 2000);
+    } catch (error) {
+      console.error('Failed to add game:', error);
+      this.saveError.set(
+        (error as { code?: string }).code === 'permission-denied'
+          ? 'Firestore denied this save. Check your database security rules.'
+          : 'Could not save this game. Please try again.',
+      );
+    } finally {
+      this.isSaving.set(false);
+    }
+  }
+
+  private async saveChanges(game: Game, payload: Omit<Game, 'id' | 'addedAt'>): Promise<void> {
+    this.saveError.set(null);
+    const duration = payload.avgDurationMinutes;
+
+    try {
+      await this.gameService.updateGame(game.id, {
+        ...payload,
+        // updateGame skips undefined values, so cleared fields must be sent as empty strings
+        imageUrl: payload.imageUrl ?? '',
+        notes: payload.notes ?? '',
+        // The BGG min-max range would otherwise keep hiding the edited duration
+        ...(duration !== game.avgDurationMinutes && {
+          minDurationMinutes: duration,
+          maxDurationMinutes: duration,
+        }),
+      });
+      await this.router.navigate(['/game', game.id]);
+    } catch (error) {
+      console.error('Failed to save game:', error);
+      this.saveError.set('Could not save your changes. Please try again.');
     }
   }
 

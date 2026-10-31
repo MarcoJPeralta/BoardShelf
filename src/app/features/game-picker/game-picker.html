@@ -1,1 +1,109 @@
-<p>game-picker works!</p>
+<div class="container container--has-sidebar">
+  <app-sidebar title="The Oracle"></app-sidebar>
+
+  <section class="game-picker">
+    <header class="game-picker__header">
+      <h1>Consult the Oracle</h1>
+      <p>Tell it about your game night and let the dice decide what hits the table.</p>
+    </header>
+
+    @if (!gamesLoaded()) {
+      <p class="game-picker__message" role="status">Opening the vault…</p>
+    } @else if (gamesError()) {
+      <p class="game-picker__message" role="alert">{{ gamesError() }}</p>
+    } @else if (total() === 0) {
+      <div class="game-picker__panel">
+        <p class="game-picker__message">The Oracle needs games to choose from.</p>
+        <a class="btn-main" routerLink="/add-game">Add your first game</a>
+      </div>
+    } @else {
+      <div class="game-picker__panel">
+        <div class="game-picker__fields">
+          <div class="game-picker__field">
+            <label for="picker-players">Players</label>
+            <input
+              id="picker-players"
+              type="number"
+              min="1"
+              placeholder="Any"
+              [value]="players() ?? ''"
+              (input)="players.set(+$any($event.target).value || null)"
+            />
+          </div>
+
+          <div class="game-picker__field">
+            <label for="picker-duration">Time available (min)</label>
+            <input
+              id="picker-duration"
+              type="number"
+              min="1"
+              placeholder="Any"
+              [value]="maxDuration() ?? ''"
+              (input)="maxDuration.set(+$any($event.target).value || null)"
+            />
+          </div>
+
+          <div class="game-picker__field">
+            <label for="picker-complexity">Max complexity</label>
+            <select
+              id="picker-complexity"
+              (change)="maxComplexity.set(+$any($event.target).value || null)"
+            >
+              <option value="" [selected]="maxComplexity() === null">Any</option>
+              @for (level of complexityLevels; track level) {
+                <option [value]="level" [selected]="maxComplexity() === level">
+                  Up to {{ level }} of 5
+                </option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="game-picker__actions">
+          <p class="game-picker__count" role="status">
+            @if (candidates().length === 0) {
+              No games match. Try loosening your filters.
+            } @else {
+              <strong>{{ candidates().length }}</strong> of {{ total() }} games in the running
+            }
+          </p>
+          <button
+            class="btn-main"
+            type="button"
+            [disabled]="candidates().length === 0"
+            (click)="roll()"
+          >
+            <span
+              class="game-picker__die"
+              [class.game-picker__die--even]="rollCount() > 0 && rollCount() % 2 === 0"
+              [class.game-picker__die--odd]="rollCount() % 2 === 1"
+              aria-hidden="true"
+              >⚄</span
+            >
+            {{ pickedGame() ? 'Roll again' : 'Roll the dice' }}
+          </button>
+        </div>
+      </div>
+
+      <div aria-live="polite">
+        @if (pickedGame(); as game) {
+          <article class="game-picker__result">
+            @if (game.imageUrl) {
+              <img class="game-picker__cover" [src]="game.imageUrl" [alt]="game.name + ' cover art'" />
+            }
+            <div class="game-picker__result-content">
+              <p class="game-picker__eyebrow">The Oracle has spoken</p>
+              <h2>{{ game.name }}</h2>
+              <ul class="game-picker__meta">
+                <li>{{ game.minPlayers }}-{{ game.maxPlayers }} players</li>
+                <li>{{ game.avgDurationMinutes }} min</li>
+                <li>Complexity {{ game.complexity }} of 5</li>
+              </ul>
+              <a class="btn-base" [routerLink]="['/game', game.id]">View details</a>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+</div>

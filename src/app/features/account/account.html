@@ -1,0 +1,79 @@
+<div class="container container--has-sidebar">
+  <app-sidebar title="Settings"></app-sidebar>
+
+  <section class="account">
+    <h1>Settings</h1>
+
+    <div class="account__panel">
+      <dl class="account__details">
+        @if (authService.currentUser()?.displayName; as displayName) {
+          <div>
+            <dt>Name</dt>
+            <dd>{{ displayName }}</dd>
+          </div>
+        }
+        <div>
+          <dt>Email</dt>
+          <dd>{{ authService.currentUser()?.email }}</dd>
+        </div>
+        <div>
+          <dt>Games in your vault</dt>
+          <dd>{{ total() }}</dd>
+        </div>
+      </dl>
+
+      <button class="btn-base" type="button" (click)="authService.logout()">Logout</button>
+    </div>
+
+    <div class="account__panel account__panel--danger">
+      <h2>Delete account</h2>
+      @if (!isConfirmingDelete()) {
+        <p>Permanently remove your account and every game in your vault.</p>
+        <button class="account__delete" type="button" (click)="startDelete()">
+          Delete account
+        </button>
+      } @else {
+        <p>
+          This will permanently delete your account and {{ total() }}
+          {{ total() === 1 ? 'game' : 'games' }}. This can't be undone.
+        </p>
+        <form
+          class="account__delete-form"
+          (submit)="confirmDelete(); $event.preventDefault()"
+        >
+          @if (authService.usesPassword()) {
+            <label for="delete-password">Confirm your password</label>
+            <input
+              id="delete-password"
+              type="password"
+              autocomplete="current-password"
+              required
+              [value]="password()"
+              (input)="password.set($any($event.target).value)"
+            />
+          } @else {
+            <p>You'll be asked to confirm with Google.</p>
+          }
+
+          @if (deleteError()) {
+            <p class="account__error" role="alert">{{ deleteError() }}</p>
+          }
+
+          <div class="account__delete-actions">
+            <button class="account__delete" type="submit" [disabled]="isDeleting()">
+              {{ isDeleting() ? 'Deleting…' : 'Permanently delete' }}
+            </button>
+            <button
+              class="btn-base"
+              type="button"
+              [disabled]="isDeleting()"
+              (click)="cancelDelete()"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      }
+    </div>
+  </section>
+</div>

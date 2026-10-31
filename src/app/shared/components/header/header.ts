@@ -15,7 +15,7 @@ export class Header {
   private dialog = inject(Dialog);
 
   openAuth(mode: 'login' | 'signup') {
-    const dialogRef = this.dialog.open(AuthModal, {
+    this.dialog.open(AuthModal, {
       minWidth: '320px',
       maxWidth: '450px',
       data: { mode },

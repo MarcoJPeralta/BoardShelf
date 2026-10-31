@@ -5,11 +5,11 @@
     [attr.aria-label]="'Open details for ' + game().name"
   ></a>
 
-  <img
-    class="game-card__image"
-    [src]="game().imageUrl || ''"
-    [alt]="game().name + ' cover image'"
-  />
+  @if (game().imageUrl) {
+    <img class="game-card__image" [src]="game().imageUrl" [alt]="game().name + ' cover image'" />
+  } @else {
+    <div class="game-card__image" aria-hidden="true"></div>
+  }
 
   <div class="game-card__overlay"></div>
 
@@ -41,7 +41,11 @@
 
       <div class="game-card__complexity">
         <span class="game-card__complexity-label">Complexity</span>
-        <span class="game-card__stars" aria-label="'Complexity ' + game().complexity + ' out of 5'">
+        <span
+          class="game-card__stars"
+          role="img"
+          [attr.aria-label]="game().complexity + ' out of 5'"
+        >
           @for (level of [1, 2, 3, 4, 5]; track level) {
             <span>{{ level <= game().complexity ? '★' : '☆' }}</span>
           }

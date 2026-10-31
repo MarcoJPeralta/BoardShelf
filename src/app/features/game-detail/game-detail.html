@@ -27,6 +27,7 @@
           @if (bggUrl(); as url) {
             <a class="btn-main" [href]="url" target="_blank" rel="noreferrer">View on BGG</a>
           }
+          <a class="btn-base" [routerLink]="['/game', game.id, 'edit']">Edit</a>
           <button class="game-detail__delete" type="button" (click)="deleteGame()">Delete</button>
         </div>
       </section>
@@ -46,10 +47,12 @@
               </div>
               <div>
                 <dt>Complexity</dt>
-                <dd class="game-detail__stars" [attr.aria-label]="'Complexity ' + game.complexity + ' out of 5'">
-                  @for (level of [1, 2, 3, 4, 5]; track level) {
-                    <span>{{ level <= game.complexity ? '★' : '☆' }}</span>
-                  }
+                <dd class="game-detail__stars">
+                  <span role="img" [attr.aria-label]="game.complexity + ' out of 5'">
+                    @for (level of [1, 2, 3, 4, 5]; track level) {
+                      <span>{{ level <= game.complexity ? '★' : '☆' }}</span>
+                    }
+                  </span>
                 </dd>
               </div>
               @if (game.averageWeight) {
@@ -99,10 +102,19 @@
         </section>
       </section>
     </article>
+  } @else if (!gamesLoaded()) {
+    <section class="game-detail game-detail--empty">
+      <p role="status">Opening the vault…</p>
+    </section>
+  } @else if (gamesError()) {
+    <section class="game-detail game-detail--empty">
+      <p role="alert">{{ gamesError() }}</p>
+    </section>
   } @else {
     <section class="game-detail game-detail--empty">
       <h1>Game not found</h1>
       <p>This game is not in your vault anymore.</p>
+      <a class="btn-main" routerLink="/library">Back to library</a>
     </section>
   }
 </div>

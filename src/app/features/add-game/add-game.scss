@@ -173,6 +173,11 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 24%, transparent);
 }
 
+.add-game__textarea {
+  min-height: 6rem;
+  resize: vertical;
+}
+
 .add-game__hint {
   color: var(--text-color-secondary);
   font-size: 0.75rem;

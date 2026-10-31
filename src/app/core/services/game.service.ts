@@ -8,7 +8,9 @@ import {
   onSnapshot,
   deleteDoc,
   doc,
+  getDocs,
   updateDoc,
+  writeBatch,
   query,
   orderBy,
 } from 'firebase/firestore';
@@ -22,6 +24,14 @@ export class GameService {
   private _games = signal<Game[]>([]);
   readonly games = this._games.asReadonly();
   readonly totalGames = computed(() => this._games().length);
+
+  // False until the first snapshot arrives, so pages can tell "loading" from "no games"
+  private _gamesLoaded = signal(false);
+  readonly gamesLoaded = this._gamesLoaded.asReadonly();
+
+  // Set when the listener fails, so a failed read is never mistaken for an empty library
+  private _gamesError = signal<string | null>(null);
+  readonly gamesError = this._gamesError.asReadonly();
 
   readonly availableCategories = computed(() => {
     const all = this._games().flatMap((g) => g.categories);
@@ -80,6 +90,7 @@ export class GameService {
   readonly hasFilteredGames = computed(() => this.filteredGames().length > 0);
 
   private unsubscribe?: () => void; // Para desligar o rádio quando o user sai
+  private retryTimer?: ReturnType<typeof setTimeout>;
   private gamesCollection = collection(db, 'games');
 
   constructor() {
@@ -100,23 +111,44 @@ export class GameService {
     const q = query(gamesRef, orderBy('addedAt', 'desc'));
 
     // onSnapshot creates a real-time "tunnel"
-    this.unsubscribe = onSnapshot(q, (snapshot) => {
-      const updatedGames = snapshot.docs.map(
-        (doc) =>
-          ({
-            ...doc.data(),
-            id: doc.id, // The ID now comes from Firestore
-            addedAt: doc.data()['addedAt']?.toDate(), // Convert Timestamp from Firebase to Date JS
-          }) as Game,
-      );
+    clearTimeout(this.retryTimer);
+    this.unsubscribe?.();
+    this.unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const updatedGames = snapshot.docs.map(
+          (doc) =>
+            ({
+              ...doc.data(),
+              id: doc.id, // The ID now comes from Firestore
+              addedAt: doc.data()['addedAt']?.toDate(), // Convert Timestamp from Firebase to Date JS
+            }) as Game,
+        );
 
-      this._games.set(updatedGames);
-    });
+        this._games.set(updatedGames);
+        this._gamesError.set(null);
+        this._gamesLoaded.set(true);
+      },
+      (error) => {
+        console.error('Failed to load games:', error);
+        this._gamesError.set(
+          error.code === 'permission-denied'
+            ? 'Firestore denied access to your games. Check your database security rules.'
+            : 'Could not load your games. Please try again.',
+        );
+        this._gamesLoaded.set(true);
+        // Firestore ends a listener after an error, so it needs a new one to recover
+        this.retryTimer = setTimeout(() => this.startListening(uid), 10000);
+      },
+    );
   }
 
   private stopListening() {
+    clearTimeout(this.retryTimer);
     if (this.unsubscribe) this.unsubscribe();
     this._games.set([]);
+    this._gamesLoaded.set(false);
+    this._gamesError.set(null);
   }
 
   /** Firestore rejects `undefined`; drop those keys before writes. */
@@ -155,5 +187,18 @@ export class GameService {
     const gamesRef = collection(db, 'users', uid, 'games');
     const gameDoc = doc(gamesRef, id);
     await deleteDoc(gameDoc);
+  }
+
+  async deleteAllGames(): Promise<void> {
+    const uid = this.authService.currentUser()?.uid;
+    if (!uid) return;
+    const snapshot = await getDocs(collection(db, 'users', uid, 'games'));
+
+    // Firestore allows at most 500 writes per batch
+    for (let i = 0; i < snapshot.docs.length; i += 500) {
+      const batch = writeBatch(db);
+      snapshot.docs.slice(i, i + 500).forEach((game) => batch.delete(game.ref));
+      await batch.commit();
+    }
   }
 }
