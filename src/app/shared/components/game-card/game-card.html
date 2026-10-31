@@ -1,9 +1,11 @@
 <article class="game-card">
-  <a
-    class="game-card__link"
-    [routerLink]="['/game', game().id]"
-    [attr.aria-label]="'Open details for ' + game().name"
-  ></a>
+  @if (!readOnly()) {
+    <a
+      class="game-card__link"
+      [routerLink]="['/game', game().id]"
+      [attr.aria-label]="'Open details for ' + game().name"
+    ></a>
+  }
 
   @if (game().imageUrl) {
     <img class="game-card__image" [src]="game().imageUrl" [alt]="game().name + ' cover image'" />
@@ -54,13 +56,15 @@
     </div>
   </div>
 
-  <button
-    type="button"
-    class="game-card__delete"
-    aria-label="Delete game"
-    title="Delete game"
-    (click)="deleteGame(game().id); $event.stopPropagation()"
-  >
-    <span aria-hidden="true">✕</span>
-  </button>
+  @if (!readOnly()) {
+    <button
+      type="button"
+      class="game-card__delete"
+      aria-label="Delete game"
+      title="Delete game"
+      (click)="deleteGame(game().id); $event.stopPropagation()"
+    >
+      <span aria-hidden="true">✕</span>
+    </button>
+  }
 </article>

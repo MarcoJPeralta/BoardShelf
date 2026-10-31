@@ -6,6 +6,7 @@ import { vi } from 'vitest';
 import { Account } from './account';
 import { AuthService } from '../../core/services/auth.service';
 import { GameService } from '../../core/services/game.service';
+import { ShareService } from '../../core/services/share.service';
 
 describe('Account', () => {
   let component: Account;
@@ -14,6 +15,7 @@ describe('Account', () => {
   const reauthenticate = vi.fn();
   const deleteAccount = vi.fn();
   const deleteAllGames = vi.fn();
+  const deleteAllShares = vi.fn();
   const usesPassword = vi.fn();
 
   beforeEach(async () => {
@@ -22,6 +24,7 @@ describe('Account', () => {
     reauthenticate.mockReset().mockImplementation(async () => void calls.push('reauthenticate'));
     deleteAllGames.mockReset().mockImplementation(async () => void calls.push('deleteAllGames'));
     deleteAccount.mockReset().mockImplementation(async () => void calls.push('deleteAccount'));
+    deleteAllShares.mockReset().mockImplementation(async () => void calls.push('deleteAllShares'));
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     await TestBed.configureTestingModule({
@@ -38,6 +41,7 @@ describe('Account', () => {
           },
         },
         { provide: GameService, useValue: { totalGames: signal(3), deleteAllGames } },
+        { provide: ShareService, useValue: { deleteAllShares } },
       ],
     }).compileComponents();
 
@@ -54,12 +58,12 @@ describe('Account', () => {
     expect(calls).toEqual([]);
   });
 
-  it('should reauthenticate, then delete the games, then the user', async () => {
+  it('should reauthenticate, then delete the public shelf, the games, then the user', async () => {
     component.password.set('secret');
     await component.confirmDelete();
 
     expect(reauthenticate).toHaveBeenCalledWith('secret');
-    expect(calls).toEqual(['reauthenticate', 'deleteAllGames', 'deleteAccount']);
+    expect(calls).toEqual(['reauthenticate', 'deleteAllShares', 'deleteAllGames', 'deleteAccount']);
   });
 
   it('should confirm with the popup for accounts without a password', async () => {

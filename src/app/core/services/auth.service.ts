@@ -47,7 +47,8 @@ export class AuthService {
       this.isAuthInitialized.set(true);
       resolve();
 
-      if (!user) {
+      // Shared shelves are public, so guests stay on them
+      if (!user && !window.location.pathname.startsWith('/shared/')) {
         this.router.navigate(['/']); // Redirect if not logged in
       }
     });

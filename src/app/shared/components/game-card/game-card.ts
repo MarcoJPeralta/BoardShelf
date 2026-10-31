@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { Game } from '../../../core/models/game.model';
+import { SharedGame } from '../../../core/models/shared-library.model';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -9,7 +9,8 @@ import { RouterLink } from '@angular/router';
   styleUrl: './game-card.scss',
 })
 export class GameCard {
-  game = input.required<Game>();
+  game = input.required<SharedGame>();
+  readOnly = input(false); // Public shelves: no details page and no delete
 
   deleteRequest = output<string>(); // emite o id
 

@@ -1,0 +1,68 @@
+.shared-library {
+  align-content: start;
+  color: var(--text-color);
+  display: grid;
+  gap: 1.5rem;
+  padding: clamp(1rem, 4vw, 2rem);
+
+  h1 {
+    color: var(--primary-color);
+    font-family: var(--font-secondary);
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1.05;
+  }
+
+  &__header {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  &__total {
+    color: var(--text-color-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+
+    strong {
+      color: var(--primary-color);
+    }
+  }
+
+  &__filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+
+    label {
+      display: grid;
+      gap: 0.35rem;
+    }
+
+    input {
+      background: transparent;
+      border: 1px solid color-mix(in srgb, var(--text-color-secondary) 50%, transparent);
+      border-radius: 6px;
+      color: var(--text-color);
+      padding: 0.5rem 0.75rem;
+    }
+  }
+
+  &__list {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+
+  &__footer {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: space-between;
+
+    a:not(.btn-main) {
+      color: var(--text-color-secondary);
+    }
+  }
+}

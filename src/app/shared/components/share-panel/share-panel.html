@@ -1,0 +1,55 @@
+<button type="button" class="btn-base" [attr.aria-expanded]="isOpen()" (click)="toggle()">
+  Share library
+</button>
+
+@if (isOpen()) {
+  <section class="share-panel" aria-label="Share your library">
+    @if (!loaded() && !error()) {
+      <p role="status">Checking your share link…</p>
+    } @else {
+      <p class="share-panel__hint">
+        Anyone with the link can see your games, without an account. Your personal notes stay
+        private.
+      </p>
+
+      <label class="share-panel__field">
+        <span>Shelf name (optional)</span>
+        <input
+          type="text"
+          maxlength="60"
+          placeholder="e.g. Sam's shelf"
+          [value]="displayName()"
+          (input)="displayName.set($any($event.target).value)"
+        />
+      </label>
+
+      @if (shareUrl(); as url) {
+        <div class="share-panel__link">
+          <input type="text" readonly aria-label="Share link" [value]="url" />
+          <button type="button" class="btn-main" (click)="copyLink()">
+            {{ copied() ? 'Copied' : 'Copy' }}
+          </button>
+        </div>
+        <div class="share-panel__actions">
+          <button type="button" class="btn-base" [disabled]="isSaving()" (click)="saveName()">
+            Save name
+          </button>
+          <button type="button" class="btn-base" [disabled]="isSaving()" (click)="replaceLink()">
+            Replace link
+          </button>
+          <button type="button" class="btn-base" [disabled]="isSaving()" (click)="turnOff()">
+            Turn off sharing
+          </button>
+        </div>
+      } @else if (loaded()) {
+        <button type="button" class="btn-main" [disabled]="isSaving()" (click)="createLink()">
+          Create share link
+        </button>
+      }
+    }
+
+    @if (error()) {
+      <p role="alert">{{ error() }}</p>
+    }
+  </section>
+}

@@ -5,6 +5,7 @@ import {
   isAuthPopupDismissed,
 } from '../../core/services/auth.service';
 import { GameService } from '../../core/services/game.service';
+import { ShareService } from '../../core/services/share.service';
 import { Sidebar } from '../../shared/components/sidebar/sidebar';
 
 @Component({
@@ -16,6 +17,7 @@ import { Sidebar } from '../../shared/components/sidebar/sidebar';
 export class Account {
   public authService = inject(AuthService);
   private gameService = inject(GameService);
+  private shareService = inject(ShareService);
   total = this.gameService.totalGames;
 
   isConfirmingDelete = signal(false);
@@ -42,7 +44,8 @@ export class Account {
       await this.authService.reauthenticate(
         this.authService.usesPassword() ? this.password() : undefined,
       );
-      // Games go before the user, since security rules need the user to still exist
+      // Public shelf and games go before the user, since security rules need the user to still exist
+      await this.shareService.deleteAllShares();
       await this.gameService.deleteAllGames();
       await this.authService.deleteAccount();
     } catch (error) {

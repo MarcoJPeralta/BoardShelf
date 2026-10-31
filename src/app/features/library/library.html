@@ -12,6 +12,7 @@
         <strong class="library-content__total-number">{{ total() }}</strong> games
       </p>
     }
+    <app-share-panel></app-share-panel>
     <app-filter-bar></app-filter-bar>
     <ul class="library-content__list">
       @for (game of games(); track game.id) {

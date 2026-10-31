@@ -1,0 +1,38 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidShelf() {
+      let shelf = request.resource.data;
+      return shelf.keys().hasOnly(['ownerUid', 'displayName', 'games'])
+        && shelf.keys().hasAll(['ownerUid', 'displayName', 'games'])
+        && shelf.displayName is string
+        && shelf.displayName.size() <= 60
+        && shelf.games is list
+        && shelf.games.size() <= 2000;
+    }
+
+    // Private: each user can only reach their own data
+    match /users/{uid}/{document=**} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Public by exact ID only: `list` is limited to the owner, so shelves can't be enumerated
+    match /sharedLibraries/{shareId} {
+      allow get: if true;
+      allow list: if isSignedIn() && resource.data.ownerUid == request.auth.uid;
+      allow create: if isSignedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && isValidShelf();
+      allow update: if isSignedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == request.auth.uid
+        && isValidShelf();
+      allow delete: if isSignedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+  }
+}

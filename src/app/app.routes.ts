@@ -5,6 +5,7 @@ import { GamePicker } from './features/game-picker/game-picker';
 import { GameDetail } from './features/game-detail/game-detail';
 import { AddGame } from './features/add-game/add-game';
 import { Account } from './features/account/account';
+import { SharedLibrary } from './features/shared-library/shared-library';
 import { authGuard } from './core/guards/auth-guard';
 import { guestGuard } from './core/guards/guest-guard';
 
@@ -16,5 +17,6 @@ export const routes: Routes = [
   { path: 'game/:id/edit', component: AddGame, canActivate: [authGuard] },
   { path: 'add-game', component: AddGame, canActivate: [authGuard] },
   { path: 'account', component: Account, canActivate: [authGuard] },
+  { path: 'shared/:shareId', component: SharedLibrary },
   { path: '**', redirectTo: '' },
 ];

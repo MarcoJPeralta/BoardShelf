@@ -1,0 +1,73 @@
+<div class="shared-library">
+  @switch (status()) {
+    @case ('loading') {
+      <p role="status">Opening the shelf…</p>
+    }
+    @case ('missing') {
+      <h1>This shelf isn't available</h1>
+      <p>The link may have been turned off or replaced.</p>
+    }
+    @case ('error') {
+      <h1>Something went wrong</h1>
+      <p role="alert">Could not load this shelf. Please try again.</p>
+    }
+    @case ('ready') {
+      <header class="shared-library__header">
+        <h1>{{ shelf()?.displayName || 'A shared game shelf' }}</h1>
+        <p class="shared-library__total">
+          Showing <strong>{{ games().length }}</strong> of
+          <strong>{{ shelf()?.games?.length }}</strong> games
+        </p>
+      </header>
+
+      <div class="shared-library__filters">
+        <label>
+          <span>Search</span>
+          <input
+            type="search"
+            placeholder="Game name"
+            [value]="search()"
+            (input)="search.set($any($event.target).value)"
+          />
+        </label>
+        <label>
+          <span>Players</span>
+          <input
+            type="number"
+            min="1"
+            [value]="players()"
+            (input)="players.set(toNumber($any($event.target).value))"
+          />
+        </label>
+        <label>
+          <span>Max minutes</span>
+          <input
+            type="number"
+            min="1"
+            [value]="maxDuration()"
+            (input)="maxDuration.set(toNumber($any($event.target).value))"
+          />
+        </label>
+      </div>
+
+      <ul class="shared-library__list">
+        @for (game of games(); track game.id) {
+          <li><app-game-card [game]="game" [readOnly]="true"></app-game-card></li>
+        }
+      </ul>
+
+      @if (shelf()?.games?.length === 0) {
+        <p>This shelf is empty for now.</p>
+      } @else if (games().length === 0) {
+        <p role="status">No games match these filters.</p>
+      }
+    }
+  }
+
+  <footer class="shared-library__footer">
+    <a class="btn-main" routerLink="/">Create your own shelf</a>
+    <a href="https://boardgamegeek.com" target="_blank" rel="noreferrer">
+      Powered by BoardGameGeek
+    </a>
+  </footer>
+</div>

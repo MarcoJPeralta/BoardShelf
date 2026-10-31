@@ -4,10 +4,11 @@ import { GameService } from '../../core/services/game.service';
 import { GameCard } from '../../shared/components/game-card/game-card';
 import { Sidebar } from '../../shared/components/sidebar/sidebar';
 import { FilterBar } from '../../shared/components/filter-bar/filter-bar';
+import { SharePanel } from '../../shared/components/share-panel/share-panel';
 
 @Component({
   selector: 'app-library',
-  imports: [RouterLink, GameCard, Sidebar, FilterBar],
+  imports: [RouterLink, GameCard, Sidebar, FilterBar, SharePanel],
   templateUrl: './library.html',
   styleUrl: './library.scss',
 })
