@@ -49,12 +49,9 @@
   &__top {
     display: flex;
     gap: 0.25rem;
-
-    @media (min-width: 768px) {
-      position: absolute;
-      top: 13px;
-      left: 1rem;
-    }
+    position: absolute;
+    top: 13px;
+    left: 1rem;
   }
 
   &__category {

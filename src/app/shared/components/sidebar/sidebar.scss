@@ -5,7 +5,11 @@
   background: var(--background-color-secondary);
   border-right: 1px solid rgba(78, 35, 15, 0.2);
   box-shadow: 4px 0 24px rgba(var(--black-color) / 0.5);
-  padding-block: 2rem;
+  padding-block: 2rem 1rem;
+  
+  @media screen and (max-width: 768px ) {
+    margin-bottom: 1rem;
+  }
 }
 
 img {
