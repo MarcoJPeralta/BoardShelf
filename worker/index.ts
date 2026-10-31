@@ -46,7 +46,8 @@ function buildBggUrl(url: URL): URL | null {
 
   if (url.pathname === '/api/bgg/thing') {
     const id = url.searchParams.get('id') ?? '';
-    if (!/^\d{1,10}$/.test(id)) return null;
+    // BGG allows up to 20 ids per request; search uses a batch to rank results by popularity
+    if (!/^\d{1,10}(,\d{1,10}){0,19}$/.test(id)) return null;
 
     const target = new URL('/xmlapi2/thing', BGG_ORIGIN);
     target.search = new URLSearchParams({ id, stats: '1' }).toString();

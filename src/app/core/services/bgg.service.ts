@@ -5,6 +5,13 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 import { BggSearchResult } from '../models/bgg-search-result.model';
 import { BggThingDetails } from '../models/bgg-thing-details.model';
 import { AuthService } from './auth.service';
+import {
+  POPULARITY_LOOKUP_SIZE,
+  filterTypoMatches,
+  rankSearchResults,
+  sortByPopularity,
+  typoFallbackQuery,
+} from './bgg-search-rank';
 
 @Injectable({ providedIn: 'root' })
 export class BggService {
@@ -18,12 +25,49 @@ export class BggService {
     const trimmed = query.trim();
     if (!trimmed) return of([]);
 
-    const params = new HttpParams().set('query', trimmed).set('page', page);
+    return this.fetchSearchResults(trimmed, page).pipe(
+      switchMap((results) => {
+        if (results.length > 0) return of(rankSearchResults(trimmed, results));
 
-    return this.getXml('search', params).pipe(
-      map((body) => this.parseSearchXml(body)),
+        const fallback = typoFallbackQuery(trimmed);
+        if (!fallback) return of([]);
+        return this.fetchSearchResults(fallback, page).pipe(
+          map((candidates) => filterTypoMatches(trimmed, candidates)),
+        );
+      }),
+      switchMap((ranked) => this.applyPopularity(trimmed, ranked)),
       catchError((err: unknown) => throwError(() => new Error(this.describeHttpError(err)))),
     );
+  }
+
+  /** Popularity only refines the order, so a failed lookup must not fail the search. */
+  private applyPopularity(
+    query: string,
+    ranked: BggSearchResult[],
+  ): Observable<BggSearchResult[]> {
+    if (ranked.length < 2) return of(ranked);
+
+    const ids = ranked.slice(0, POPULARITY_LOOKUP_SIZE).map((result) => result.bggId);
+    return this.getXml('thing', new HttpParams().set('id', ids.join(','))).pipe(
+      map((body) => sortByPopularity(query, ranked, this.parseVotes(body))),
+      catchError(() => of(ranked)),
+    );
+  }
+
+  private parseVotes(xml: string): Map<string, number> {
+    const doc = new DOMParser().parseFromString(xml.trim(), 'text/xml');
+    const votes = new Map<string, number>();
+    doc.querySelectorAll('items > item').forEach((item) => {
+      const id = item.getAttribute('id');
+      const count = Number(item.querySelector('usersrated')?.getAttribute('value'));
+      if (id && Number.isFinite(count)) votes.set(id, count);
+    });
+    return votes;
+  }
+
+  private fetchSearchResults(query: string, page: number): Observable<BggSearchResult[]> {
+    const params = new HttpParams().set('query', query).set('page', page);
+    return this.getXml('search', params).pipe(map((body) => this.parseSearchXml(body)));
   }
 
   /** Full game metadata for one BGG id (`/xmlapi2/thing?id=…&stats=1`). */
