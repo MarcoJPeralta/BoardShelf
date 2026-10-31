@@ -12,9 +12,4 @@ export const environment = {
     cloudName: 'YOUR_CLOUD_NAME',
     uploadPreset: 'YOUR_UPLOAD_PRESET',
   },
-  boardGameGeek: {
-    apiToken: 'YOUR_BGG_APPLICATION_TOKEN',
-    apiOrigin: 'https://boardgamegeek.com',
-    devProxyPath: '/bgg-api',
-  },
 };

@@ -1,41 +1,29 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, throwError, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
-import { environment } from '../../../environments/environment';
+import { Observable, from, throwError, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { BggSearchResult } from '../models/bgg-search-result.model';
 import { BggThingDetails } from '../models/bgg-thing-details.model';
+import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class BggService {
   private readonly http = inject(HttpClient);
+  private readonly authService = inject(AuthService);
 
-  /** XML API 2 base (`…/xmlapi2`) — dev uses `/bgg-api` proxy to avoid browser CORS. */
-  private readonly xmlApi2BaseUrl = this.resolveXmlApi2BaseUrl();
+  /** Same-origin proxy that adds the BGG token: `worker/index.ts`, or `proxy.conf.mjs` in dev. */
+  private readonly apiBaseUrl = '/api/bgg';
 
   search(query: string, page = 1): Observable<BggSearchResult[]> {
     const trimmed = query.trim();
     if (!trimmed) return of([]);
 
-    const token = this.getTokenOrNull();
-    if (!token) {
-      return throwError(
-        () => new Error('BoardGameGeek API token is missing. Set it in `environment.ts`.'),
-      );
-    }
+    const params = new HttpParams().set('query', trimmed).set('page', page);
 
-    const params = new HttpParams().set('query', trimmed).set('type', 'boardgame').set('page', page);
-
-    return this.http
-      .get(`${this.xmlApi2BaseUrl}/search`, {
-        params,
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'text',
-      })
-      .pipe(
-        map((body) => this.parseSearchXml(body)),
-        catchError((err: unknown) => throwError(() => new Error(this.describeHttpError(err)))),
-      );
+    return this.getXml('search', params).pipe(
+      map((body) => this.parseSearchXml(body)),
+      catchError((err: unknown) => throwError(() => new Error(this.describeHttpError(err)))),
+    );
   }
 
   /** Full game metadata for one BGG id (`/xmlapi2/thing?id=…&stats=1`). */
@@ -45,38 +33,29 @@ export class BggService {
       return throwError(() => new Error('Missing BoardGameGeek id.'));
     }
 
-    const token = this.getTokenOrNull();
-    if (!token) {
-      return throwError(
-        () => new Error('BoardGameGeek API token is missing. Set it in `environment.ts`.'),
-      );
-    }
+    const params = new HttpParams().set('id', id);
 
-    const params = new HttpParams().set('id', id).set('stats', '1');
-
-    return this.http
-      .get(`${this.xmlApi2BaseUrl}/thing`, {
-        params,
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'text',
-      })
-      .pipe(
-        map((body) => this.parseThingXml(body)),
-        catchError((err: unknown) => throwError(() => new Error(this.describeHttpError(err)))),
-      );
+    return this.getXml('thing', params).pipe(
+      map((body) => this.parseThingXml(body)),
+      catchError((err: unknown) => throwError(() => new Error(this.describeHttpError(err)))),
+    );
   }
 
-  private getTokenOrNull(): string | null {
-    const token = environment.boardGameGeek.apiToken?.trim();
-    return token || null;
-  }
-
-  private resolveXmlApi2BaseUrl(): string {
-    const { apiOrigin, devProxyPath } = environment.boardGameGeek;
-    if (!environment.production && devProxyPath) {
-      return `${devProxyPath}/xmlapi2`;
+  private getXml(endpoint: 'search' | 'thing', params: HttpParams): Observable<string> {
+    const user = this.authService.currentUser();
+    if (!user) {
+      return throwError(() => new Error('Please sign in to search BoardGameGeek.'));
     }
-    return `${apiOrigin}/xmlapi2`;
+
+    return from(user.getIdToken()).pipe(
+      switchMap((idToken) =>
+        this.http.get(`${this.apiBaseUrl}/${endpoint}`, {
+          params,
+          headers: { Authorization: `Bearer ${idToken}` },
+          responseType: 'text',
+        }),
+      ),
+    );
   }
 
   private parseSearchXml(xml: string): BggSearchResult[] {
@@ -238,8 +217,8 @@ export class BggService {
   private describeHttpError(err: unknown): string {
     if (err && typeof err === 'object' && 'status' in err) {
       const status = (err as { status?: number }).status;
-      if (status === 401 || status === 403) {
-        return 'BoardGameGeek rejected this request. Check that your API token is valid.';
+      if (status === 401) {
+        return 'Your session has expired. Please sign in again.';
       }
       if (status === 429) {
         return 'BoardGameGeek rate limit reached. Wait a few seconds and try again.';

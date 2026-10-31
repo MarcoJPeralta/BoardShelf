@@ -2,6 +2,22 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.1.
 
+## Setup
+
+The app needs Firebase (Auth and Firestore), Cloudinary and a BoardGameGeek API token. Firebase and Cloudinary keys live in `src/environments/environment.ts` and the BGG token lives in `.dev.vars`. Neither file is committed, and the app won't build without the first:
+
+```bash
+npm install
+cp src/environments/environment.example.ts src/environments/environment.ts
+cp .dev.vars.example .dev.vars
+```
+
+Then replace the placeholder values in the new files. The BGG token must never go in `environment.ts`, because that file is compiled into the browser bundle. Games are stored per user at `users/{uid}/games` in Firestore, so your security rules must let each signed-in user read and write their own path.
+
+## Deployment
+
+The app runs on Cloudflare Workers. `worker/index.ts` serves the build and proxies BGG requests for signed-in users, adding the token on the server. `npm run deploy` builds the app and uploads the token from `.dev.vars` as a Worker secret.
+
 ## Development server
 
 To start a local development server, run:
